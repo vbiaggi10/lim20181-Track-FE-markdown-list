@@ -1,3 +1,8 @@
+import lodash from 'lodash';
+exports.printMsg = function() {
+    console.log('This msg is from boilerplate');
+}
+
 const mdLinks = require("md-links");
 
 mdLinks("./some/example.md")
