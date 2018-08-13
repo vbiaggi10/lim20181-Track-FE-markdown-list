@@ -1,22 +1,32 @@
 {
-    "name": "Reportel",
-    "version": "1.0.0",
-    "main": "src/index.html",
-    "license": "MIT",
-    "scripts": {
-      "htmlhint": "htmlhint src/*.html test/*.html",
-      "eslint": "eslint --ext .js src/ test/",
-      "pretest": "npm run eslint && npm run htmlhint",
-      "test-browser": "opener ./test/index.html",
-      "test-node": "nyc mocha ./test/headless.js && nyc report --reporter=html",
-      "test": "npm run test-node && npm run test-browser"
-    },
-    "dependencies": {
-      "chai": "^4.1.2",
-      "eslint": "^4.19.1",
-      "htmlhint": "^0.9.13",
-      "mocha": "^5.1.1",
-      "nyc": "^11.7.1",
-      "opener": "^1.4.3"
-    }
-  }
+  "name": "vbiaggi10-md-links",
+  "version": "1.0.0",
+  "main": "src/index.html",
+  "license": "MIT",
+  "scripts": {
+    "htmlhint": "htmlhint src/*.html test/*.html",
+    "eslint": "eslint --ext .js src/ test/",
+    "pretest": "npm run eslint && npm run htmlhint",
+    "test-browser": "opener ./test/index.html",
+    "test-node": "nyc mocha ./test/headless.js && nyc report --reporter=html",
+    "test": "npm run test-node && npm run test-browser"
+  },
+  "dependencies": {
+    "chai": "^4.1.2",
+    "eslint": "^4.19.1",
+    "htmlhint": "^0.9.13",
+    "mocha": "^5.1.1",
+    "nyc": "^11.7.1",
+    "opener": "^1.4.3"
+  },
+  "description": "[Markdown](https://es.wikipedia.org/wiki/Markdown) es un lenguaje de marcado\r ligero muy popular entre developers. Es usado en muchísimas plataformas que\r manejan texto plano (GitHub, foros, blogs, ...), y es muy común\r encontrar varios archivos en ese formato en cualquier tipo de repositorio\r (empezando por el tradicional `README.md`).",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vbiaggi10/lim20181-Track-FE-markdown-list.git"
+  },
+  "author": "vbiaggi10",
+  "bugs": {
+    "url": "https://github.com/vbiaggi10/lim20181-Track-FE-markdown-list/issues"
+  },
+  "homepage": "https://github.com/vbiaggi10/lim20181-Track-FE-markdown-list#readme"
+}
