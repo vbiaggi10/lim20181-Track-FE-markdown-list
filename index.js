@@ -1,61 +1,78 @@
-/* import lodash from 'lodash';
-exports.printMsg = function() {
-    console.log('This msg is from boilerplate');
-} */
+#!/usr/bin/env node
 
 const fs = require("fs");
-var path = require('path');
+// const mdLinks = require("md-links");
+
+
 let directory;
+let options = {
+  validate: false,
+  stats: false
+}
 
-process.argv.forEach((val, index) => {
-  if (index === 2) {
-    directory = val;
-    fs.stat(directory, (err, stat) => {
-      if (stat.isFile()) {
-        validateMD(stat, directory)
-      }
-      else if (stat.isDirectory()) {
-        readDirectory(stat, directory);
-      }
-    })
-
-  }
-})
+mdLinks = (path, options) => {
+  fs.stat(path, (err, stat) => {
+    if (stat.isFile()) {
+      validateMD(stat, '', path)
+    } else if (stat.isDirectory()) {
+      readDirectory(stat, path);
+    }
+  })
+};
 
 const readDirectory = (stat, directory) => {
   fs.readdir(directory, (err, files) => {
     for (let index = 0; index < files.length; index++) {
-      const element = files[index];
-      // console.log(element)
-      validateMD(stat, element);
+      const file = files[index];
+      validateMD(stat, directory, file);
     }
   });
 };
 
-const validateMD = (stat, element) => {
+const validateMD = (stat, directory, file) => {
   let fileMD;
-  var path_splitted = element.split('.');
+  var path_splitted = file.split('.');
   var extension = path_splitted.pop();
   if (extension === 'md') {
     if (stat.isFile()) {
-      fileMD = directory;
+      fileMD = file;
       readFileMD(fileMD);
-    }
-    else if (stat.isDirectory()) {
-      fileMD = directory + "/" + element;
+    } else if (stat.isDirectory()) {
+      fileMD = directory + "/" + file;
       readFileMD(fileMD);
     }
   }
 };
 
 const readFileMD = (fileMD) => {
+  let msg;
+  let cont = 0;
   fs.readFile(fileMD, (err, res) => {
-    if (/hola/.test(res.toString()))
-      console.log("si se encontro")
-    else
-      console.log("No se encontro")
+    if (/hola/.test(res.toString())) {
+      console.log('contiene hola')
+    } else {
+      console.log('no contiene hola')
+    }
   });
 }
+
+// for (const i in process.argv) {
+//   console.log(process.argv)
+//   if (process.argv[i] === 'md-links') {
+directory = process.argv[2];
+mdLinks(directory, options)
+//   }
+// }
+
+/* process.argv.forEach((val, index) => {
+  if (index === 2) {
+    console.log(val)
+    directory = val;
+    mdLinks(directory, options)
+  }
+}) */
+
+module.exports = mdLinks;
 
 /* const mdLinks = require("md-links");
 

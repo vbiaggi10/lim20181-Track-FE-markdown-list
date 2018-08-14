@@ -1,8 +1,11 @@
 {
-  "name": "vbiaggi10-md-links-markdown",
-  "version": "1.0.0",
-  "main": "src/index.html",
+  "name": "vbiaggi10-mdlinks",
+  "version": "1.0.11",
+  "main": "./cli.js",
   "license": "MIT",
+  "bin": {
+    "md-links": "./index.js"
+  },
   "description": "[Markdown](https://es.wikipedia.org/wiki/Markdown) es un lenguaje de marcado\r ligero muy popular entre developers. Es usado en muchísimas plataformas que\r manejan texto plano (GitHub, foros, blogs, ...), y es muy común\r encontrar varios archivos en ese formato en cualquier tipo de repositorio\r (empezando por el tradicional `README.md`).",
   "entry point": "index.js",
   "repository": {
@@ -18,9 +21,12 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [
     "md-links"
-  ]
+  ],
+  "devDependencies": {
+    "jest": "^23.5.0"
+  }
 }
