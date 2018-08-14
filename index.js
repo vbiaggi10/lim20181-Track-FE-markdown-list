@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
-// const mdLinks = require("md-links");
+const fetch = require("node-fetch");
 
-
-let directory;
 let options = {
   validate: false,
   stats: false
@@ -45,32 +43,23 @@ const validateMD = (stat, directory, file) => {
 };
 
 const readFileMD = (fileMD) => {
-  let msg;
-  let cont = 0;
   fs.readFile(fileMD, (err, res) => {
-    if (/hola/.test(res.toString())) {
+    const text = res.toString();
+    var expression = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/gi;
+    var regex = new RegExp(expression);
+
+    text.replace(regex, (url) => {
+      fetch(url).then(function (response) {
+        console.log(fileMD + "   " + url + "   " + response.status); // returns 200
+      });
+    })
+    /* if (/hola/.test(res.toString())) {
       console.log('contiene hola')
     } else {
       console.log('no contiene hola')
-    }
+    } */
   });
 }
-
-// for (const i in process.argv) {
-//   console.log(process.argv)
-//   if (process.argv[i] === 'md-links') {
-directory = process.argv[2];
-mdLinks(directory, options)
-//   }
-// }
-
-/* process.argv.forEach((val, index) => {
-  if (index === 2) {
-    console.log(val)
-    directory = val;
-    mdLinks(directory, options)
-  }
-}) */
 
 module.exports = mdLinks;
 
