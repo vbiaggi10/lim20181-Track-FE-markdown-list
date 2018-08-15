@@ -3,14 +3,18 @@
 const fs = require("fs");
 const fetch = require("node-fetch");
 let contador = 0;
+let options = {
+  validate: false,
+  stats: false
+};
 
-
-mdLinks = (path, options) => {
+mdLinks = (path, option) => {
+  options = option;
   fs.stat(path, (err, stat) => {
     if (stat.isFile()) {
-      validateMD(stat, '', path, options)
+      validateMD(stat, '', path, option)
     } else if (stat.isDirectory()) {
-      readDirectory(stat, path, options);
+      readDirectory(stat, path, option);
     }
   })
 };
@@ -20,7 +24,15 @@ const readDirectory = (stat, directory, options) => {
     for (let index = 0; index < files.length; index++) {
       const file = files[index];
       validateMD(stat, directory, file, options);
+      let newDirectory = directory + '/' + file;
+      console.log(newDirectory)
+      fs.stat(newDirectory, (err, stat) => {
+        if (stat.isDirectory()) {
+          mdLinks(newDirectory, options)
+        }
+      })
     }
+
   });
 };
 
@@ -58,11 +70,6 @@ const readFileMD = (fileMD, options) => {
 
       });
     })
-    /* if (/hola/.test(res.toString())) {
-      console.log('contiene hola')
-    } else {
-      console.log('no contiene hola')
-    } */
   });
 }
 const validateUrl = (fileMD, url, response) => {
@@ -82,33 +89,3 @@ const statsUrl = (fileMD, url, response) => {
 }
 
 module.exports = mdLinks;
-
-/* const mdLinks = require("md-links");
-
-mdLinks("./some/example.md")
-  .then(links => {
-    // => [{ href, text, file }]
-  })
-  .catch(console.error);
-
-mdLinks("./some/example.md", {
-  validate: true
-})
-  .then(links => {
-    // => [{ href, text, file, status, ok }]
-  })
-  .catch(console.error);
-
-mdLinks("./some/example.md", {
-  stats: true
-})
-  .then(links => {
-    // => [{ href, text, file, total, unique, domains }]
-  })
-  .catch(console.error);
-
-mdLinks("./some/dir")
-  .then(links => {
-    // => [{ href, text, file }]
-  })
-  .catch(console.error); */
