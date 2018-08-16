@@ -33,7 +33,7 @@ Te muestra la version del paquete.
 
 ~~~
 $ md-links --version
-1.0.4
+1.0.41
 ~~~
 
 *  `--help`
