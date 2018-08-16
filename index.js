@@ -66,6 +66,8 @@ const readFileMD = (fileMD, options) => {
           statsUrl(fileMD, url, response);
         } else if (options.stats === true && options.validate === true) {
           statsValidateUrl(fileMD, url, response)
+        } else {
+          console.log(fileMD + "   " + url);
         }
 
       });

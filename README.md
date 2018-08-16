@@ -1,5 +1,89 @@
 # Markdown Links
 
+## Descripción
+
+Esta librería 
+
+Los archivos `Markdown` normalmente contienen _links_ (vínculos/ligas) que muchas veces están rotos o ya no son válidos y eso perjudica mucho el valor de la información que se quiere compartir.
+
+Es por esto se creó esta herramienta, que lee y analiza archivos
+en formato `Markdown`, para verificar los links que contengan y reporte algunas estadísticas.
+
+
+## Instalación de md-links
+---
+~~~
+$ npm install vbiaggi10-mdlinks
+~~~
+
+## Modo de uso
+---
+~~~
+$ md-links ./some/example.md
+./some/example.md http://algo.com/2/3/ Link a algo
+./some/example.md https://otra-cosa.net/algun-doc.html algún doc
+./some/example.md http://google.com/ Google
+~~~
+
+### Opciones
+
+*  `--version`
+
+Te muestra la version del paquete.
+
+~~~
+$ md-links --version
+1.0.4
+~~~
+
+*  `--help`
+
+Te muestra ayuda con los comandos que puedes usar.
+
+~~~
+$ md-links --help
+ Usage: cli [options] <path>
+
+  Options:
+
+    -V, --version   output the version number
+    -v, --validate  petición HTTP para averiguar si el link funciona o no
+    -s, --stats     estadísticas básicas sobre los links
+    -h, --help      output usage information
+~~~
+
+*  `--validate`
+
+Si pasamos la opción `--validate`, el módulo hace una petición HTTP para averiguar si el link funciona o no. Si el link resulta en una redirección a una URL que responde ok, entonces consideraremos el link como ok.
+
+~~~
+$ md-links ./some/example.md --validate
+./some/example.md http://algo.com/2/3/ ok 200 Link a algo
+./some/example.md https://otra-cosa.net/algun-doc.html fail 404 algún doc
+./some/example.md http://google.com/ ok 301 Google
+~~~
+
+* `--stats`
+
+Si pasamos la opción `--stats` el output (salida) será un texto con estadísticas básicas sobre los links.
+
+~~~
+$ md-links ./some/example.md --stats
+Total: 3
+Unique: 3
+~~~
+
+* `--stats --validate`
+
+Si combinamos `--stats` y `--validate` obtendremos estadísticas de los resultados de la validación.
+
+~~~
+$ md-links ./some/example.md --stats --validate
+Total: 3
+Unique: 3
+Broken: 1
+~~~
+
 ## Preámbulo
 
 [Markdown](https://es.wikipedia.org/wiki/Markdown) es un lenguaje de marcado

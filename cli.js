@@ -6,9 +6,9 @@ const mdLinks = require('./index');
 const program = require('commander');
 
 program
-  .version('1.0.11')
+  .version('1.0.4')
   .arguments('<path>')
-  .option('-v, --validate', 'The user to authenticate as')
-  .option('-s, --stats', 'The user\'s password')
+  .option('-v, --validate', 'HTTP request to find out if the link works or not')
+  .option('-s, --stats', 'basic statistics about links.')
   .action(mdLinks)
 program.parse(process.argv);
