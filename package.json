@@ -1,6 +1,6 @@
 {
   "name": "vbiaggi10-mdlinks",
-  "version": "1.0.41",
+  "version": "1.0.42",
   "main": "./cli.js",
   "license": "MIT",
   "bin": {
