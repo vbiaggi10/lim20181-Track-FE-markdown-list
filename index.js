@@ -71,7 +71,8 @@ const readFileMD = (fileMD, options) => {
 
     if (!expressionLinkMatch && !expressionLinkMDMatch) {
       return console.log('No se encontraron URLs')
-    } else{
+    } else if(!null){
+      console.log(text)
       // conttotal = expressionLinkMatch.length + expressionLinkMDMatch.length;
       // console.log(conttotal)
       if (expressionLink.test(expressionLinkMatch)) {
