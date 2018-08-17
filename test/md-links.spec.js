@@ -1,10 +1,26 @@
 const mdLinks = require('../index');
 
-test('adds 1 + 2 to equal 3', () => {
+test('mdLinks(./src, options) to equal true', () => {
   let options = {
     validate: false,
     stats: false
   }
-  console.log(mdLinks('./src', options));
-  expect(mdLinks('./src', options)).toBe(1);
+  expect(mdLinks('./src', options)).toBe(true);
+});
+
+test('mdLinks(./src/index.md, options) to equal true', () => {
+  let options = {
+    validate: false,
+    stats: false
+  }
+  expect(mdLinks('./src/index.md', options)).toBe(true);
+});
+
+test('mdLinks(./srcd, options) to equal true', () => {
+  let options = {
+    validate: false,
+    stats: false
+  }
+  errorMsg = 'Archivo o carpeta no existe';
+  expect(mdLinks('./srcd', options)).toBe(true);
 });

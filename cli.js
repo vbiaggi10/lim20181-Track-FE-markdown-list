@@ -9,6 +9,6 @@ program
   .version('1.0.42')
   .arguments('<path>')
   .option('-v, --validate', 'HTTP request to find out if the link works or not')
-  .option('-s, --stats', 'basic statistics about links.')
+  .option('-s, --stats', 'basic statistics about links')
   .action(mdLinks)
 program.parse(process.argv);

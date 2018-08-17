@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const fetch = require("node-fetch");
+const fs = require('fs');
+const fetch = require('node-fetch');
 let options = {
   validate: false,
   stats: false
@@ -10,23 +10,36 @@ let options = {
 mdLinks = (path, option) => {
   options = option;
   fs.stat(path, (err, stat) => {
-    if (stat.isFile()) {
-      validateMD(stat, '', path, option)
-    } else if (stat.isDirectory()) {
-      readDirectory(stat, path, option);
+    if (err === null) {
+      if (stat.isFile()) {
+        console.log(path)
+        validateMD(path, options)
+      } else if (stat.isDirectory()) {
+        readDirectory(path, options);
+      }
+    } else if (err.code === 'ENOENT') {
+      return console.log('Archivo o carpeta no existe')
+    } else {
+      return console.log(err.code);
     }
-  })
+  });
+  return true;
 };
 
-const readDirectory = (stat, directory, options) => {
+const readDirectory = (directory, options) => {
   fs.readdir(directory, (err, files) => {
-    for (let index = 0; index < files.length; index++) {
-      const file = files[index];
-      validateMD(stat, directory, file, options);
+    for (const i in files) {
+      const file = files[i];
+      // validateMD(stat, directory, file, options);
       let newDirectory = directory + '/' + file;
+      // console.log('linea 34 ' + newDirectory)
+      // console.log('linea 35 '+file)
+
       fs.stat(newDirectory, (err, stat) => {
         if (stat.isDirectory()) {
           mdLinks(newDirectory, options)
+        } else if (stat.isFile()) {
+          validateMD(newDirectory, options);
         }
       })
     }
@@ -34,80 +47,81 @@ const readDirectory = (stat, directory, options) => {
   });
 };
 
-const validateMD = (stat, directory, file, options) => {
-  let fileMD;
-  var path_splitted = file.split('.');
+const validateMD = (directory, options) => {
+  var path_splitted = directory.split('.');
   var extension = path_splitted.pop();
   if (extension === 'md') {
-    if (stat.isFile()) {
-      fileMD = file;
-      readFileMD(fileMD, options);
-    } else if (stat.isDirectory()) {
-      fileMD = directory + "/" + file;
-      readFileMD(fileMD, options);
-    }
+    readFileMD(directory, options);
   }
 };
 
-let cont1 = 0, cont2 = 0, cont3 = 0, conttotal = 0;
+let cont1 = 0,
+  cont2 = 0,
+  cont3 = 0,
+  conttotal = 0;
 
 const readFileMD = (fileMD, options) => {
   fs.readFile(fileMD, (err, res) => {
     const text = res.toString();
-    console.log(text.match(/[^()]((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi))
-    text.match(/[^()]((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi)
-      .forEach((url) => {
-        let whitoutTittle = '--------';
-        cont2++;
-        validateIsUrl(fileMD, whitoutTittle, url, options, cont1, cont2);
-      });
+    let expressionLink = /[^()]((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi;
+    let expressionLinkMD = /\[([\w\s]*)\]\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi;
 
-    text.match(/\[([\w\s]*)\]\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi)
-      .forEach((url) => {
-        let tittle = url.replace(/\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi, '');
-        let tittle1 = tittle.replace(/[\[\]]/gi, '');
-        let newUrl = url.replace(/\[([\w\s]*)\]/gi, '');
-        let newUrl1 = newUrl.replace(/[\(\)]/gi, '');
-        cont1++;
-        validateIsUrl(fileMD, tittle1, newUrl1, options, cont1, cont2);
-      });
+    let expressionLinkMatch = text.match(expressionLink)
+    let expressionLinkMDMatch = text.match(expressionLinkMD)
 
+    if (!expressionLinkMatch && !expressionLinkMDMatch) {
+      return console.log('No se encontraron URLs')
+    } else{
+      // conttotal = expressionLinkMatch.length + expressionLinkMDMatch.length;
+      // console.log(conttotal)
+      if (expressionLink.test(expressionLinkMatch)) {
+        expressionLinkMatch.forEach((url) => {
+          let newUrl = url.replace(/[\n \ ]/gi, '');
+          let whitoutTittle = '--------';
+          selectOptions(fileMD, whitoutTittle, newUrl, options, cont1, cont2);
+        });
+      }
+      if (expressionLinkMD.test(expressionLinkMDMatch)) {
+        expressionLinkMDMatch.forEach((url) => {
+          let tittle = url.replace(/\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi, '');
+          let newTittle = tittle.replace(/[\[\]]/gi, '');
+          let newUrl = url.replace(/\[([\w\s]*)\]/gi, '');
+          let newUrlClear = newUrl.replace(/[\(\)]/gi, '');
 
-
-    // validateIsUrl(fileMD, whitoutTittle, url, options)
-  });
-
-}
-const validateIsUrl = (fileMD, tittle, newUrl, options, cont1, cont2) => {
-
-  fetch(newUrl).then(function (response) {
-    if (options.validate === true && !options.stats) {
-      validateUrl(fileMD, tittle, newUrl, response);
-    } else if (options.stats === true && !options.validate) {
-      statsUrl(fileMD, newUrl, response, cont1, cont2);
-    } else if (options.stats === true && options.validate === true) {
-      statsValidateUrl(fileMD, item, response)
-    } else {
-      console.log(fileMD + "   " + newUrl + "   Link a " + tittle);
+          cont1++;
+          selectOptions(fileMD, newTittle, newUrlClear, options, cont1, cont2);
+        });
+      }
     }
 
+    conttotal = (cont1 + cont2);
   });
-};
-const validateUrl = (fileMD, tittle, url, response) => {
-  if (response.status < 400) {
-    console.log(fileMD + "   " + url + "    ok   " + response.status + "   Link a " + tittle); // returns 200
+}
+const selectOptions = (fileMD, tittle, newUrl, options, cont1, cont2) => {
+
+  if (options.validate === true && !options.stats) {
+    validateUrl(fileMD, tittle, newUrl);
+  } else if (options.stats === true && !options.validate) {
+    statsUrl(fileMD, newUrl, cont1, cont2);
+  } else if (options.stats === true && options.validate === true) {
+    statsValidateUrl(fileMD, item)
   } else {
-    console.log(fileMD + "   " + url + "    fail   " + response.status + "   Link a " + tittle); // returns 200
+    return console.log(fileMD + '  \t' + newUrl + '  \tLink a  \t' + tittle);
   }
+
+};
+const validateUrl = (fileMD, tittle, url) => {
+  fetch(url).then(function (response) {
+    if (response.status < 400) {
+      return console.log(fileMD + '  \t' + url + '  \t(ok)  \t' + response.status + '  \tLink a  \t' + tittle); // returns 200
+    } else {
+      return console.log(fileMD + '  \t' + url + '  \t(fail)  \t' + response.status + '  \tLink a  \t' + tittle); // returns 200
+    }
+  });
 }
 
-const statsUrl = (fileMD, newUrl, response, cont1, cont2) => {
-  // console.log(fileMD)
-  conttotal = cont1 + cont2;
-  console.log(conttotal)
-  // console.log(url)
-  // console.log("Total: " + contador)
-  // console.log("Unique: " + contador)
+const statsUrl = (fileMD, newUrl, cont1, cont2) => {
+  // console.log(newUrl.length)
 }
 
 module.exports = mdLinks;

@@ -2,8 +2,6 @@
 
 ## Descripción
 
-Esta librería 
-
 Los archivos `Markdown` normalmente contienen _links_ (vínculos/ligas) que muchas veces están rotos o ya no son válidos y eso perjudica mucho el valor de la información que se quiere compartir.
 
 Es por esto se creó esta herramienta, que lee y analiza archivos
@@ -47,8 +45,8 @@ $ md-links --help
   Options:
 
     -V, --version   output the version number
-    -v, --validate  petición HTTP para averiguar si el link funciona o no
-    -s, --stats     estadísticas básicas sobre los links
+    -v, --validate  HTTP request to find out if the link works or not
+    -s, --stats     basic statistics about links
     -h, --help      output usage information
 ~~~
 
