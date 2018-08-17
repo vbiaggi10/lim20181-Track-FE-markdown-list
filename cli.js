@@ -6,7 +6,7 @@ const mdLinks = require('./index');
 const program = require('commander');
 
 program
-  .version('1.0.42')
+  .version('1.0.44')
   .arguments('<path>')
   .option('-v, --validate', 'HTTP request to find out if the link works or not')
   .option('-s, --stats', 'basic statistics about links')

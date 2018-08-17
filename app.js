@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const fs = require('fs');
 const fetch = require('node-fetch');
 let options = {
@@ -130,5 +128,3 @@ const validateUrl = (fileMD, tittle, url) => {
 const statsUrl = (fileMD, newUrl, cont1, cont2) => {
   // console.log(newUrl.length)
 }
-
-module.exports = mdLinks;
