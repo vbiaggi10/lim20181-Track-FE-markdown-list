@@ -1,6 +1,6 @@
 {
   "name": "vbiaggi10-mdlinks",
-  "version": "1.0.47",
+  "version": "1.0.48",
   "main": "./cli.js",
   "license": "MIT",
   "bin": {
@@ -27,6 +27,7 @@
     "md-links"
   ],
   "devDependencies": {
+    "eslint": "^5.4.0",
     "jest": "^23.5.0"
   },
   "dependencies": {

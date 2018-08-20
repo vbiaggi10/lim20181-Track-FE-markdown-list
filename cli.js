@@ -10,5 +10,5 @@ program
   .arguments('<path>')
   .option('-v, --validate', 'HTTP request to find out if the link works or not')
   .option('-s, --stats', 'basic statistics about links')
-  .action(mdLinks)
+  .action(mdLinks);
 program.parse(process.argv);
