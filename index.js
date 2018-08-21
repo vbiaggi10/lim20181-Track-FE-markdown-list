@@ -2,141 +2,164 @@
 
 const fs = require('fs');
 const fetch = require('node-fetch');
-let options = {
-  validate: false,
-  stats: false
-};
+const path = require('path');
+
 let totalCount = 0;
 let okCount = 0;
 let brokenCount = 0;
 let uniqueCount = 0;
+let normalCount = 0;
+let mdCount = 0;
 
 
-const mdLinks = (path, option) => {
-  options = option;
-  fs.stat(path, (err, stat) => {
-    if (err === null) {
-      if (stat.isFile()) {
-        validateMD(path, options);
-      } else if (stat.isDirectory()) {
-        readDirectory(path, options);
-      }
-    } else if (err.code === 'ENOENT') {
-      return console.log('Archivo o carpeta no existe');
-    } else {
-      return console.log(err.code);
-    }
-  });
-  return true;
-};
-
-const readDirectory = (directory, options) => {
-  fs.readdir(directory, (err, files) => {
-    for (const i in files) {
-      const file = files[i];
-      let newDirectory = directory + '/' + file;
-
-      fs.stat(newDirectory, (err, stat) => {
-        if (stat.isDirectory()) {
-          mdLinks(newDirectory, options);
-        } else if (stat.isFile()) {
-          validateMD(newDirectory, options);
+const readDirectory = (dir, done) => {
+  let resultsUrl = [];
+  let results = [];
+  fs.readdir(dir, (err, list) => {
+    if (err) return done(err);
+    var pending = list.length;
+    if (!pending) return done(null, results);
+    list.forEach((file) => {
+      file = path.resolve(dir, file);
+      fs.stat(file, (err, stat) => {
+        if (stat && stat.isDirectory()) {
+          readDirectory(file, (err, res) => {
+            if (err) throw err.code;
+            results = results.concat(res);
+            if (!--pending) done(null, results);
+          });
+        } else {
+          file = checkMD(file);
+          if (!!file) {
+            results.push(file)
+          }
+          if (!--pending) done(null, results);
         }
       });
-    }
-
+    });
   });
 };
 
-const validateMD = (directory, options) => {
-  const path_splitted = directory.split('.');
-  const extension = path_splitted.pop();
-  if (extension === 'md') {
-    readFileMD(directory, options);
-  }
-};
+const readFileMD = (fileMD, options, done) => {
+  let results = [];
+  fs.readFile(fileMD, (err, list) => {
+    list = list.toString();
+    if (err) return done(err);
 
-const readFileMD = (fileMD, options) => {
-  fs.readFile(fileMD, (err, res) => {
-    const text = res.toString();
     const expressionLink = /[^()]((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi;
     const expressionLinkMD = /\[([\w\s]*)\]\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi;
 
-    const expressionLinkMatch = text.match(expressionLink);
-    const expressionLinkMDMatch = text.match(expressionLinkMD);
-
-    if (!expressionLinkMatch && !expressionLinkMDMatch) {
-      return console.log('No se encontraron URLs');
-    } else {
-      if (!expressionLinkMatch) {
-        totalCount = 0 + expressionLinkMDMatch.length;
-      } else if (!expressionLinkMDMatch) {
-        totalCount = 0 + expressionLinkMatch.length;
-      } else {
-        totalCount = expressionLinkMatch.length + expressionLinkMDMatch.length;
-      }
-      statsUrl(fileMD, totalCount);
-      if (expressionLink.test(expressionLinkMatch)) {
-        expressionLinkMatch.forEach((url) => {
-          const newUrl = url.replace(/[\n \ ]/gi, '');
-          const whitoutTittle = '--------';
-          validateUrl(fileMD, whitoutTittle, newUrl, options);
-        });
-      }
-      if (expressionLinkMD.test(expressionLinkMDMatch)) {
-        expressionLinkMDMatch.forEach((url) => {
-          const tittle = url.replace(/\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi, '');
-          const newTittle = tittle.replace(/[\[\]]/gi, '');
-          const newUrl = url.replace(/\[([\w\s]*)\]/gi, '');
-          const newUrlClear = newUrl.replace(/[\(\)]/gi, '');
-
-          validateUrl(fileMD, newTittle, newUrlClear, options);
-        });
-      }
-    }
+    const urls = list.match(expressionLink).concat(list.match(expressionLinkMD));
+    var pending = urls.length;
+    if (!pending) return done(null, results);
+    urls.forEach(url => {
+      url = tittleUrl(url, fileMD);
+      if (!!url) {
+        validateUrl(url, options)
+        results.push(url);
+      };
+      if (!--pending) done(null, results);
+    })
   });
+
 };
 
-const selectOptions = (fileMD, tittle, newUrl, options) => {
-
-  if (options.validate === true && !options.stats) {
-    validateUrl(fileMD, tittle, newUrl);
-  } else if (options.stats === true && options.validate === true) {
-    statsValidateUrl();
-  } else if (!options.validate && !options.stats) {
-    return console.log(fileMD + '  \t' + newUrl + '  \tLink a  \t' + tittle);
+const tittleUrl = (results, dir) => {
+  if (results !== null) {
+    results = results.toString();
+    if (results.substr(0, 1) === '[' && results.substr(-1, 1) === ')') {
+      let tittle = results.replace(/\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi, '');
+      tittle = tittle.replace(/[\[\]]/gi, '');
+      let newUrl = results.replace(/\[([\w\s]*)\]/gi, '');
+      newUrl = newUrl.replace(/[\(\)]/gi, '');
+      let link = JSON.parse(JSON.stringify({
+        href: newUrl,
+        text: tittle,
+        file: dir
+      }))
+      return link;
+    } else {
+      let newUrl = results.replace(/[\n \ ]/gi, '')
+      let link = JSON.parse(JSON.stringify({
+        href: newUrl,
+        text: ' ---- ',
+        file: dir
+      }))
+      return link;
+    }
   }
+}
 
-};
+const checkMD = (results) => {
+  if (path.extname(results) === '.md') {
+    return results;
+  }
+}
 
-const validateUrl = (fileMD, tittle, url, options) => {
+const validateUrl = (url, options) => {
+  fetch(url.href).then((response) => {
+    let statusText = '';
+    if (response.status < 400) {
+      okCount++;
+      statusText = 'ok';
+    } else {
+      brokenCount++;
+      statusText = 'fail';
+    }
+    let link = JSON.parse(JSON.stringify({
+      href: url.href,
+      text: url.text,
+      file: url.file,
+      status: response.status,
+      statusText: statusText,
+      totalCount: okCount + brokenCount,
+      brokenCount: brokenCount
+    }))
+    selectOptions(link, options)
+  });
+}
+
+const selectOptions = (results, options) => {
   if (options.validate === true && !options.stats) {
-    fetch(url).then((response) => {
-      if (response.status < 400) {
-        okCount++;
-        console.log('linea 115 ' + okCount);
-        return console.log(fileMD + '  \t' + url + '  \t(ok)  \t' + response.status + '  \tLink a  \t' + tittle); // returns 200
+    console.log(results.file + '\t' + results.href + '\t' + results.statusText + '\t' + results.status + '\tLink a ' + results.text)
+  } else if (options.stats === true && !options.validate) {
+    console.log(results.totalCount)
+  } else if (options.validate === true && options.stats === true) {
+    console.log(results.totalCount)
+  } else if (!options.validate && !options.stats) {
+    console.log(results.file + '\t' + results.href + '\tLink a ' + results.text)
+  }
+}
+
+const resolveFile = (results, options) => {
+  readFileMD(results, options, (err, res) => {
+    if (err) return reject(err);
+    // console.log(res)
+    // selectOptions(res, options)
+  })
+}
+
+const mdLinks = (path, options) => {
+  return new Promise((resolve, reject) => {
+
+    fs.stat(path, (err, stat) => {
+      if (stat && stat.isDirectory()) {
+        readDirectory(path, (err, results) => {
+          if (err) return reject(err);
+          results.forEach(file => {
+            resolveFile(file, options);
+
+            return resolve(file)
+          });
+        })
       } else {
-        brokenCount++;
-        console.log('linea 119 ' + brokenCount);
-        return console.log(fileMD + '  \t' + url + '  \t(fail)  \t' + response.status + '  \tLink a  \t' + tittle); // returns 200
+        resolveFile(path, options);
+
+        return resolve(path)
       }
-    });
-  } else if (options.stats === true && options.validate === true) {
-    statsValidateUrl(okCount, brokenCount);
-  } else if (!options.validate && !options.stats) {
-    return console.log(fileMD + '  \t' + newUrl + '  \tLink a  \t' + tittle);
-  }
-};
+    })
 
-const statsUrl = (fileMD, totalCount) => {
-  if (options.stats === true && !options.validate) {
-    console.log(fileMD + '\nTotal: \t' + totalCount);
-  }
-};
-
-const statsValidateUrl = (okCount, brokenCount) => {
-  console.log('linea 137' + okCount + ' ' + brokenCount)
-};
+  });
+}
 
 module.exports = mdLinks;
