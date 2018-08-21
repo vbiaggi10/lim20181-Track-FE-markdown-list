@@ -13,7 +13,6 @@ let mdCount = 0;
 
 
 const readDirectory = (dir, done) => {
-  let resultsUrl = [];
   let results = [];
   fs.readdir(dir, (err, list) => {
     if (err) return done(err);
@@ -40,7 +39,7 @@ const readDirectory = (dir, done) => {
   });
 };
 
-const readFileMD = (fileMD, options, done) => {
+const readFileMD = (fileMD, done) => {
   let results = [];
   fs.readFile(fileMD, (err, list) => {
     list = list.toString();
@@ -55,9 +54,20 @@ const readFileMD = (fileMD, options, done) => {
     urls.forEach(url => {
       url = tittleUrl(url, fileMD);
       if (!!url) {
-        validateUrl(url, options)
+        // url = validateUrl(url).then(res => {
+        //   url.status = res.status;
+        //   url.statusText = res.statusText;
+        //   return url;
+        // })
         results.push(url);
       };
+      Promise.all(results.map(url =>
+        fetch(url).then(resp => resp)
+      )).then(texts => {
+        texts.status = res.status;
+        texts.statusText = res.statusText;
+        results.push(texts);
+      })
       if (!--pending) done(null, results);
     })
   });
@@ -96,28 +106,9 @@ const checkMD = (results) => {
   }
 }
 
-const validateUrl = (url, options) => {
-  fetch(url.href).then((response) => {
-    let statusText = '';
-    if (response.status < 400) {
-      okCount++;
-      statusText = 'ok';
-    } else {
-      brokenCount++;
-      statusText = 'fail';
-    }
-    let link = JSON.parse(JSON.stringify({
-      href: url.href,
-      text: url.text,
-      file: url.file,
-      status: response.status,
-      statusText: statusText,
-      totalCount: okCount + brokenCount,
-      brokenCount: brokenCount
-    }))
-    selectOptions(link, options)
-  });
-}
+const validateUrl = (url) => {
+  return fetch(url.href)
+};
 
 const selectOptions = (results, options) => {
   if (options.validate === true && !options.stats) {
@@ -132,9 +123,9 @@ const selectOptions = (results, options) => {
 }
 
 const resolveFile = (results, options) => {
-  readFileMD(results, options, (err, res) => {
+  readFileMD(results, (err, res) => {
     if (err) return reject(err);
-    // console.log(res)
+    console.log(res)
     // selectOptions(res, options)
   })
 }
