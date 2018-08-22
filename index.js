@@ -3,6 +3,7 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
 const path = require('path');
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 let arrayDir = [];
 let totalCount = 0;
@@ -108,52 +109,62 @@ const checkMD = (results) => {
   }
 }
 
-const selectOptions = (results, options) => {
-  if (options.validate === true && !options.stats) {
-    console.log(results.file + '\t' + results.href + '\t' + results.statusText + '\t' + results.status + '\tLink a ' + results.text)
-  } else if (!options.validate && !options.stats) {
-    console.log(results.file + '\t' + results.href + '\tLink a ' + results.text)
-  } else if (options.validate === true && options.stats === true) {
-    if (results.status < 400) {
-      okCount++;
-      console.log("Directorio " + arrayDir.length + '\tLinks rotos:' + results.status + '\tLinks rotos:' + okCount)
+const selectOptions = (arrayDir, urls, options) => {
+  let hol = 0;
+  if (!options.validate && !options.stats) {
+    urls.map(url => {
+      console.log(url.file + '\t' + url.href + '\tLink a ' + url.text)
+    })
 
-    } else {
-      brokenCount++;
-      console.log("Directorio " + arrayDir.length + '\tLinks rotos:' + results.status + '\tLinks rotos:' + brokenCount)
-
-    }
-    // console.log("Directorio "+(0++)+results.totalCount)
+  } else if (options.validate === true && !options.stats) {
+    urls.map(url => {
+      console.log(url.file + '\t' + url.href + '\t' + url.statusText + '\t' + url.status + '\tLink a ' + url.text)
+    })
+  } else if (options.validate === true && !options.validate) {
+    console.log("Directorio " + arrayDir.length + '\tLinks total:' + urls.length)
+  } else if (options.stats === true && options.stats === true) {
+    urls.map(url => {
+      if (url.status > 400) {
+        return hol++;
+      }
+    })
+    console.log("Directorio " + arrayDir.length + '\tLinks total:' + urls.length + '\tLinks rotos:' + hol)
   }
 }
 
-const validateUrl = (url, options) => {
-  fetch(url.href).then(res => {
-    url.status = res.status;
-    url.statusText = res.statusText;
-    selectOptions(url, options)
-  }).catch(err => {
-    if (!!err.code) {
-      console.error(err.code + '\t' + url.href)
-    }
-  })
+const validateUrl = (url) => {
+  var request = new XMLHttpRequest();
+  request.open('HEAD', url, true);
+  request.send();
+
+  if (request.status === "404") {
+    console.log("No existe pagina");
+  }
+  // fetch(url.href).then(res => {
+  //   url.status = res.status;
+  //   url.statusText = res.statusText;
+  //   selectOptions(url, options)
+  // }).catch(err => {
+  //   if (!!err.code) {
+  //     console.error(err.code + '\t' + url.href)
+  //   }
+  // })
 }
 
 const resolveFile = (results, options) => {
   readFileMD(results, (err, res) => {
     if (err) return reject(err);
-    res.map(url => {
-      validateUrl(url, options);
+    const urlWithStats = res.map(url => {
+      /* url.status = */ validateUrl(url);
+      if (url.status < 400) {
+        url.statusText = 'OK';
+      } else {
+        url.statusText = 'FAIL';
+      }
+      return url
     })
-    arrayDir.push(res);
-    if (options.stats === true && !options.validate) {
-      res.map(url => {
-        return totalCount++
-      })
-      console.log("Directorio " + arrayDir.length + '\tLinks total:' + res.length)
-    }
-
-    // selectOptions(res, options)
+    arrayDir.push(urlWithStats);
+    // selectOptions(arrayDir, urlWithStats, options)
   })
 }
 
