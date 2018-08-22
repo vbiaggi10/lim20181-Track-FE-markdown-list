@@ -4,6 +4,7 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 const path = require('path');
 
+let arrayDir = [];
 let totalCount = 0;
 let okCount = 0;
 let brokenCount = 0;
@@ -61,13 +62,14 @@ const readFileMD = (fileMD, done) => {
         // })
         results.push(url);
       };
-      Promise.all(results.map(url =>
-        fetch(url).then(resp => resp)
-      )).then(texts => {
-        texts.status = res.status;
-        texts.statusText = res.statusText;
-        results.push(texts);
-      })
+      // Promise.all(results.map(url =>
+      //   fetch(url).then(resp => resp)
+      // )).then(texts => {
+      //   let hola = {};
+      //   hola.status = texts.status;
+      //   hola.statusText = texts.statusText;
+      //   results.push(hola);
+      // })
       if (!--pending) done(null, results);
     })
   });
@@ -106,26 +108,51 @@ const checkMD = (results) => {
   }
 }
 
-const validateUrl = (url) => {
-  return fetch(url.href)
-};
-
 const selectOptions = (results, options) => {
   if (options.validate === true && !options.stats) {
     console.log(results.file + '\t' + results.href + '\t' + results.statusText + '\t' + results.status + '\tLink a ' + results.text)
-  } else if (options.stats === true && !options.validate) {
-    console.log(results.totalCount)
-  } else if (options.validate === true && options.stats === true) {
-    console.log(results.totalCount)
   } else if (!options.validate && !options.stats) {
     console.log(results.file + '\t' + results.href + '\tLink a ' + results.text)
+  } else if (options.validate === true && options.stats === true) {
+    if (results.status < 400) {
+      okCount++;
+      console.log("Directorio " + arrayDir.length + '\tLinks rotos:' + results.status + '\tLinks rotos:' + okCount)
+
+    } else {
+      brokenCount++;
+      console.log("Directorio " + arrayDir.length + '\tLinks rotos:' + results.status + '\tLinks rotos:' + brokenCount)
+
+    }
+    // console.log("Directorio "+(0++)+results.totalCount)
   }
+}
+
+const validateUrl = (url, options) => {
+  fetch(url.href).then(res => {
+    url.status = res.status;
+    url.statusText = res.statusText;
+    selectOptions(url, options)
+  }).catch(err => {
+    if (!!err.code) {
+      console.error(err.code + '\t' + url.href)
+    }
+  })
 }
 
 const resolveFile = (results, options) => {
   readFileMD(results, (err, res) => {
     if (err) return reject(err);
-    console.log(res)
+    res.map(url => {
+      validateUrl(url, options);
+    })
+    arrayDir.push(res);
+    if (options.stats === true && !options.validate) {
+      res.map(url => {
+        return totalCount++
+      })
+      console.log("Directorio " + arrayDir.length + '\tLinks total:' + res.length)
+    }
+
     // selectOptions(res, options)
   })
 }
