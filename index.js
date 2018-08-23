@@ -7,7 +7,7 @@ const path = require('path');
 const readDirectory = (dir, done) => {
   let results = [];
   fs.readdir(dir, (err, list) => {
-    if (err) return done(err);
+    if (err) return done(err.code);
     var pending = list.length;
     if (!pending) return done(null, results);
     list.forEach((file) => {
@@ -35,7 +35,7 @@ const readFileMD = (fileMD, done) => {
   let results = [];
   fs.readFile(fileMD, (err, list) => {
     list = list.toString();
-    if (err) return done(err);
+    if (err) return done(err.code);
 
     const expressionLink = /[^()]((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi;
     const expressionLinkMD = /\[([\w\s]*)\]\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi;
@@ -47,7 +47,7 @@ const readFileMD = (fileMD, done) => {
       url = tittleUrl(url, fileMD);
       if (!!url) {
         results.push(url);
-      };
+      }
       if (!--pending) done(null, results);
     })
   });
@@ -95,20 +95,26 @@ const uniqueLinks = (link) => {
   return link;
 }
 
-const selectOptions = ( urls, options) => {
+const selectOptions = (urls, options) => {
   const newArrayUrl = urls.map(url => {
     return url.href;
   })
   if (!options.validate && !options.stats) {
-    urls.forEach(url => {
-      console.log(`${url.file}  \t  ${url.href}  \tLink a   ${url.text}`)
+    let txt = '';
+    urls.map(url => {
+      txt += (`${url.file}  \t  ${url.href}  \tLink a   ${url.text} \n`);
     })
+    return txt;
+
   } else if (options.validate === true && !options.stats) {
+    let txt = '';
     urls.forEach(url => {
-      console.log(`${url.file}  \t  ${url.href}  \t  ${url.statusText}  \t  ${url.status}  \tLink a   ${url.text}`)
+      txt += (`${url.file}  \t  ${url.href}  \t  ${url.statusText}  \t  ${url.status}  \tLink a   ${url.text} \n`);
     })
+    return txt;
+
   } else if (options.stats === true && !options.validate) {
-    console.log(`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks unicos:  ${uniqueLinks(newArrayUrl).length}`)
+    return (`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks unicos:  ${uniqueLinks(newArrayUrl).length} \n`)
   } else if (options.stats === true && options.stats === true) {
     let brokenCount = 0;
     urls.forEach(url => {
@@ -116,7 +122,7 @@ const selectOptions = ( urls, options) => {
         return brokenCount++;
       }
     })
-    console.log(`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks rotos:  ${brokenCount}  \tLinks unicos:  ${uniqueLinks(newArrayUrl).length}`)
+    return (`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks rotos:  ${uniqueLinks(newArrayUrl).length}  \tLinks unicos:  ${brokenCount} \n`)
   }
 }
 
@@ -127,7 +133,7 @@ const validateUrl = (url) => {
     return url;
   }).catch(err => {
     if (!!err.code) {
-      console.error(err.code + '\t' + url.href)
+      return `${err.code}  \t  ${url.href}`
     }
   })
 }
@@ -135,7 +141,7 @@ const validateUrl = (url) => {
 const resolveFile = (response, done) => {
   let results = [];
   readFileMD(response, (err, res) => {
-    if (err) return done(err);
+    if (err) return done(err.code);
     var pending = res.length;
     if (!pending) return done(null, results);
     res.forEach(url => {
@@ -146,31 +152,42 @@ const resolveFile = (response, done) => {
     })
   })
 }
+
+const loopFile = (results, options, done) => {
+  let result = '';
+  var pending = results.length;
+  if (!pending) return done(null, result);
+  results.forEach(file => {
+    resolveFile(file, (err, res) => {
+      if (err) return done(err.code);
+      result += selectOptions(res, options)
+      if (!--pending) done(null, result);
+    })
+  });
+}
+
 const mdLinks = (path, options) => {
   return new Promise((resolve, reject) => {
-
     fs.stat(path, (err, stat) => {
+      if (err) return reject(err.code);
       if (stat && stat.isDirectory()) {
         readDirectory(path, (err, results) => {
-          if (err) return reject(err);
-          results.forEach(file => {
-            resolveFile(file, (err, results) => {
-              if (err) return reject(err);
-              selectOptions( results, options)
-              return resolve(results)
-            })
-          });
+          if (err) return reject(err.code);
+          loopFile(results, options, (err, results) => {
+            if (err) return reject(err.code);
+            return resolve(results);
+          })
         })
       } else {
         resolveFile(path, (err, results) => {
-          if (err) return reject(err);
-          selectOptions(results, options)
-          return resolve(results)
+          if (err) return reject(err.code);
+          return resolve(selectOptions(results, options));
         })
       }
     })
 
   });
 }
+
 
 module.exports = mdLinks;
