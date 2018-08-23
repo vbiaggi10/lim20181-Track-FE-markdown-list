@@ -3,16 +3,6 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
 const path = require('path');
-var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-
-let arrayDir = [];
-let totalCount = 0;
-let okCount = 0;
-let brokenCount = 0;
-let uniqueCount = 0;
-let normalCount = 0;
-let mdCount = 0;
-
 
 const readDirectory = (dir, done) => {
   let results = [];
@@ -56,21 +46,8 @@ const readFileMD = (fileMD, done) => {
     urls.forEach(url => {
       url = tittleUrl(url, fileMD);
       if (!!url) {
-        // url = validateUrl(url).then(res => {
-        //   url.status = res.status;
-        //   url.statusText = res.statusText;
-        //   return url;
-        // })
         results.push(url);
       };
-      // Promise.all(results.map(url =>
-      //   fetch(url).then(resp => resp)
-      // )).then(texts => {
-      //   let hola = {};
-      //   hola.status = texts.status;
-      //   hola.statusText = texts.statusText;
-      //   results.push(hola);
-      // })
       if (!--pending) done(null, results);
     })
   });
@@ -109,65 +86,66 @@ const checkMD = (results) => {
   }
 }
 
-const selectOptions = (arrayDir, urls, options) => {
-  let hol = 0;
-  if (!options.validate && !options.stats) {
-    urls.map(url => {
-      console.log(url.file + '\t' + url.href + '\tLink a ' + url.text)
-    })
+const uniqueLinks = (link) => {
+  let aux = 0;
+  link.sort();
+  while (aux < link.length) {
+    link[aux + 1] == link[aux] ? link.splice(aux, 1) : aux++
+  }
+  return link;
+}
 
-  } else if (options.validate === true && !options.stats) {
-    urls.map(url => {
-      console.log(url.file + '\t' + url.href + '\t' + url.statusText + '\t' + url.status + '\tLink a ' + url.text)
+const selectOptions = ( urls, options) => {
+  const newArrayUrl = urls.map(url => {
+    return url.href;
+  })
+  if (!options.validate && !options.stats) {
+    urls.forEach(url => {
+      console.log(`${url.file}  \t  ${url.href}  \tLink a   ${url.text}`)
     })
-  } else if (options.validate === true && !options.validate) {
-    console.log("Directorio " + arrayDir.length + '\tLinks total:' + urls.length)
+  } else if (options.validate === true && !options.stats) {
+    urls.forEach(url => {
+      console.log(`${url.file}  \t  ${url.href}  \t  ${url.statusText}  \t  ${url.status}  \tLink a   ${url.text}`)
+    })
+  } else if (options.stats === true && !options.validate) {
+    console.log(`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks unicos:  ${uniqueLinks(newArrayUrl).length}`)
   } else if (options.stats === true && options.stats === true) {
-    urls.map(url => {
+    let brokenCount = 0;
+    urls.forEach(url => {
       if (url.status > 400) {
-        return hol++;
+        return brokenCount++;
       }
     })
-    console.log("Directorio " + arrayDir.length + '\tLinks total:' + urls.length + '\tLinks rotos:' + hol)
+    console.log(`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks rotos:  ${brokenCount}  \tLinks unicos:  ${uniqueLinks(newArrayUrl).length}`)
   }
 }
 
 const validateUrl = (url) => {
-  var request = new XMLHttpRequest();
-  request.open('HEAD', url, true);
-  request.send();
-
-  if (request.status === "404") {
-    console.log("No existe pagina");
-  }
-  // fetch(url.href).then(res => {
-  //   url.status = res.status;
-  //   url.statusText = res.statusText;
-  //   selectOptions(url, options)
-  // }).catch(err => {
-  //   if (!!err.code) {
-  //     console.error(err.code + '\t' + url.href)
-  //   }
-  // })
-}
-
-const resolveFile = (results, options) => {
-  readFileMD(results, (err, res) => {
-    if (err) return reject(err);
-    const urlWithStats = res.map(url => {
-      /* url.status = */ validateUrl(url);
-      if (url.status < 400) {
-        url.statusText = 'OK';
-      } else {
-        url.statusText = 'FAIL';
-      }
-      return url
-    })
-    arrayDir.push(urlWithStats);
-    // selectOptions(arrayDir, urlWithStats, options)
+  return fetch(url.href).then(res => {
+    url.status = res.status;
+    url.statusText = res.statusText;
+    return url;
+  }).catch(err => {
+    if (!!err.code) {
+      console.error(err.code + '\t' + url.href)
+    }
   })
 }
 
+const resolveFile = (response, done) => {
+  let results = [];
+  readFileMD(response, (err, res) => {
+    if (err) return done(err);
+    var pending = res.length;
+    if (!pending) return done(null, results);
+    res.forEach(url => {
+      validateUrl(url).then(response => {
+        results.push(response)
+        if (!--pending) done(null, results);
+      })
+    })
+  })
+}
 const mdLinks = (path, options) => {
   return new Promise((resolve, reject) => {
 
@@ -176,15 +154,19 @@ const mdLinks = (path, options) => {
         readDirectory(path, (err, results) => {
           if (err) return reject(err);
           results.forEach(file => {
-            resolveFile(file, options);
-
-            return resolve(file)
+            resolveFile(file, (err, results) => {
+              if (err) return reject(err);
+              selectOptions( results, options)
+              return resolve(results)
+            })
           });
         })
       } else {
-        resolveFile(path, options);
-
-        return resolve(path)
+        resolveFile(path, (err, results) => {
+          if (err) return reject(err);
+          selectOptions(results, options)
+          return resolve(results)
+        })
       }
     })
 
