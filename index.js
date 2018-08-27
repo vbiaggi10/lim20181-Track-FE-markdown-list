@@ -8,7 +8,7 @@ const readDirectory = (dir, done) => {
   let results = [];
   fs.readdir(dir, (err, list) => {
     if (err) return done(err.code);
-    var pending = list.length;
+    let pending = list.length;
     if (!pending) return done(null, results);
     list.forEach((file) => {
       file = path.resolve(dir, file);
@@ -36,12 +36,12 @@ const readFileMD = (fileMD, done) => {
   fs.readFile(fileMD, (err, list) => {
     list = list.toString();
     if (err) return done(err.code);
-
+    let urls;
     const expressionLink = /[^()]((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)/gi;
-    const expressionLinkMD = /\[([\w\s]*)\]\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi;
+    const expressionLinkMD = /\[.*\]\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi;
 
-    const urls = list.match(expressionLink).concat(list.match(expressionLinkMD));
-    var pending = urls.length;
+    urls = linkMatch(list, expressionLinkMD, expressionLink)
+    let pending = urls.length;
     if (!pending) return done(null, results);
     urls.forEach(url => {
       url = tittleUrl(url, fileMD);
@@ -51,8 +51,21 @@ const readFileMD = (fileMD, done) => {
       if (!--pending) done(null, results);
     })
   });
-
 };
+
+const linkMatch = (list, expressionLinkMD, expressionLink) => {
+  let urls;
+  if (list.match(expressionLinkMD) === null) {
+    urls = list.match(expressionLink);
+    return urls;
+  } else if (list.match(expressionLink) === null) {
+    urls = list.match(expressionLinkMD);
+    return urls;
+  } else {
+    urls = list.match(expressionLink).concat(list.match(expressionLinkMD));
+    return urls;
+  }
+}
 
 const tittleUrl = (results, dir) => {
   if (results !== null) {
@@ -60,7 +73,7 @@ const tittleUrl = (results, dir) => {
     if (results.substr(0, 1) === '[' && results.substr(-1, 1) === ')') {
       let tittle = results.replace(/\(((ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?)\)/gi, '');
       tittle = tittle.replace(/[\[\]]/gi, '');
-      let newUrl = results.replace(/\[([\w\s]*)\]/gi, '');
+      let newUrl = results.replace(/\[.*\]/gi, '');
       newUrl = newUrl.replace(/[\(\)]/gi, '');
       let link = JSON.parse(JSON.stringify({
         href: newUrl,
@@ -72,7 +85,7 @@ const tittleUrl = (results, dir) => {
       let newUrl = results.replace(/[\n \ ]/gi, '')
       let link = JSON.parse(JSON.stringify({
         href: newUrl,
-        text: ' ---- ',
+        text: '----',
         file: dir
       }))
       return link;
@@ -87,12 +100,8 @@ const checkMD = (results) => {
 }
 
 const uniqueLinks = (link) => {
-  let aux = 0;
-  link.sort();
-  while (aux < link.length) {
-    link[aux + 1] == link[aux] ? link.splice(aux, 1) : aux++
-  }
-  return link;
+  console.log(link)
+  return [...new Set(link)];
 }
 
 const selectOptions = (urls, options) => {
@@ -102,19 +111,18 @@ const selectOptions = (urls, options) => {
   if (!options.validate && !options.stats) {
     let txt = '';
     urls.map(url => {
-      txt += (`${url.file}  \t  ${url.href}  \tLink a   ${url.text} \n`);
+      txt += (`${url.file}\t${url.href}\tLink a\t${url.text}\r\n`);
     })
     return txt;
 
   } else if (options.validate === true && !options.stats) {
     let txt = '';
     urls.forEach(url => {
-      txt += (`${url.file}  \t  ${url.href}  \t  ${url.statusText}  \t  ${url.status}  \tLink a   ${url.text} \n`);
+      txt += (`${url.file}\t${url.href}\t${url.statusText}\t${url.status}\tLink a\t${url.text}\r\n`);
     })
     return txt;
-
   } else if (options.stats === true && !options.validate) {
-    return (`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks unicos:  ${uniqueLinks(newArrayUrl).length} \n`)
+    return (`Directorio:\t${urls[0].file}\r\n\tLinks total:\t${urls.length}\r\n\tLinks unicos:\t${uniqueLinks(newArrayUrl).length}\r\n`)
   } else if (options.stats === true && options.stats === true) {
     let brokenCount = 0;
     urls.forEach(url => {
@@ -122,7 +130,7 @@ const selectOptions = (urls, options) => {
         return brokenCount++;
       }
     })
-    return (`Directorio:  ${urls[0].file}  \tLinks total:  ${urls.length}  \tLinks rotos:  ${uniqueLinks(newArrayUrl).length}  \tLinks unicos:  ${brokenCount} \n`)
+    return (`Directorio:\t${urls[0].file}\r\n\tLinks total:\t${urls.length}\r\n\tLinks unicos:\t${uniqueLinks(newArrayUrl).length}\r\n\tLinks rotos:\t${brokenCount}\r\n`)
   }
 }
 
@@ -133,7 +141,7 @@ const validateUrl = (url) => {
     return url;
   }).catch(err => {
     if (!!err.code) {
-      return `${err.code}  \t  ${url.href}`
+      return `${err.code}\t${url.href}`
     }
   })
 }
@@ -142,7 +150,7 @@ const resolveFile = (response, done) => {
   let results = [];
   readFileMD(response, (err, res) => {
     if (err) return done(err.code);
-    var pending = res.length;
+    let pending = res.length;
     if (!pending) return done(null, results);
     res.forEach(url => {
       validateUrl(url).then(response => {
@@ -155,7 +163,7 @@ const resolveFile = (response, done) => {
 
 const loopFile = (results, options, done) => {
   let result = '';
-  var pending = results.length;
+  let pending = results.length;
   if (!pending) return done(null, result);
   results.forEach(file => {
     resolveFile(file, (err, res) => {
