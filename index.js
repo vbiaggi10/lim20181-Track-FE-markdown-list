@@ -117,8 +117,14 @@ const selectOptions = (urls, options) => {
   } else if (options.validate === true && !options.stats) {
     let txt = '';
     urls.forEach(url => {
-      txt += (`${url.file}\t${url.href}\t${url.statusText}\t${url.status}\tLink a\t${url.text}\r\n`);
+      if (url.hasOwnProperty('errorCode')) {
+        txt += (`${url.file}\t${url.href}\t${url.errorCode}\r\n`);
+      } else if (url.hasOwnProperty('status')) {
+        txt += (`${url.file}\t${url.href}\t${url.statusText}\t${url.status}\tLink a\t${url.text}\r\n`);
+      }
+
     })
+
     return txt;
   } else if (options.stats === true && !options.validate) {
     return (`Directorio:\t${urls[0].file}\r\n\tLinks total:\t${urls.length}\r\n\tLinks unicos:\t${uniqueLinks(newArrayUrl).length}\r\n`)
@@ -139,10 +145,8 @@ const validateUrl = (url) => {
     url.statusText = res.statusText;
     return url;
   }).catch(err => {
-    // if (!!err.code) {
     url.errorCode = err.code;
-    return url
-    // }
+    return url;
   })
 }
 
