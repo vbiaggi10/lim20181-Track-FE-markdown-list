@@ -100,7 +100,6 @@ const checkMD = (results) => {
 }
 
 const uniqueLinks = (link) => {
-  console.log(link)
   return [...new Set(link)];
 }
 
@@ -140,9 +139,10 @@ const validateUrl = (url) => {
     url.statusText = res.statusText;
     return url;
   }).catch(err => {
-    if (!!err.code) {
-      return `${err.code}\t${url.href}`
-    }
+    // if (!!err.code) {
+    url.errorCode = err.code;
+    return url
+    // }
   })
 }
 
