@@ -6,11 +6,15 @@ let options = {
 }
 
 test('resolves to mdLinks(./src, options)', () => {
-  return expect(Promise.resolve(mdLinks('./src', options))).resolves.toBe("C:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\index.md\thttp://www.sunat.gob.pe/\tLink a\t----\r\nC:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\readme.md\thttps://nodejs.org/en/\tLink a\tNode.js\r\n");
+  return expect(Promise.resolve(mdLinks('./src', options))).resolves.toBe("C:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\index.md\thttp://www.sunat.gob.pe/\tLink a\t----\r\nC:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\readme.md\thttps://otra-cosa.net/algun-doc.html\tLink a\t----\r\nC:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\readme.md\thttps://otra-cosa.net/algun-doc.html\tLink a\t----\r\nC:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\readme.md\thttps://nodejs.org/en/\tLink a\tNode.js\r\nC:\\Users\\Valeria Biaggi\\Documents\\GitHub\\lim20181-Track-FE-markdown-list\\src\\readme.md\thttps://nodejs.org/en/asdddddjjjajaaj\tLink a\tNode.js\r\n");
 });
 
 test('resolves to mdLinks(./src/index.md, options)', () => {
   return expect(Promise.resolve(mdLinks('./src/index.md', options))).resolves.toBe("./src/index.md\thttp://www.sunat.gob.pe/\tLink a\t----\r\n");
+});
+
+test('resolves to mdLinks(./src/index.md, options)', () => {
+  return expect(Promise.resolve(mdLinks('./src/hola.md', options))).resolves.toBe("./src/hola.md\thttps://nodejs.org/en/asdddddjjjajaaj\tLink a\tNode.js\r\n");
 });
 
 test('resolves to mdLinks(./src/index.md, options) -> options.validate = true && options.stats = false', () => {
