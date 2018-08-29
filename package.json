@@ -21,7 +21,7 @@
     "test": "test"
   },
   "jest": {
-    "testResultsProcessor": "jest-report"
+    "verbose": true
   },
   "scripts": {
     "test": "jest --coverage"
