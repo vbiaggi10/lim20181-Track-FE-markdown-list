@@ -1,6 +1,10 @@
 {
   "name": "vbiaggi10-mdlinks",
+<<<<<<< HEAD
   "version": "1.0.53",
+=======
+  "version": "1.0.52",
+>>>>>>> 610d42805fd6eedd8f7c47b3ade42a374850e5bf
   "main": "./index.js",
   "license": "MIT",
   "bin": {
