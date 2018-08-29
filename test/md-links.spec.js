@@ -32,11 +32,7 @@ test('rejects to octopus', () => {
     stats: false
   }
   return expect(Promise.reject(new Error(mdLinks('./src/indexaaa.md', options)))).rejects.toThrow(
-<<<<<<< HEAD
     'ENNOUT'
-=======
-    'ENNOUT',
->>>>>>> 610d42805fd6eedd8f7c47b3ade42a374850e5bf
   );
 });
 
@@ -46,11 +42,7 @@ test('rejects to octopus', () => {
     stats: false
   }
   return expect(Promise.reject(new Error(mdLinks('./srcdd/', options)))).rejects.toThrow(
-<<<<<<< HEAD
     'ENNOUT'
-=======
-    'ENNOUT',
->>>>>>> 610d42805fd6eedd8f7c47b3ade42a374850e5bf
   );
 });
 
