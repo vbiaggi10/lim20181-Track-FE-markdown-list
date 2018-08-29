@@ -1,7 +1,7 @@
 {
   "name": "vbiaggi10-mdlinks",
-  "version": "1.0.51",
-  "main": "./cli.js",
+  "version": "1.0.53",
+  "main": "./index.js",
   "license": "MIT",
   "bin": {
     "md-links": "./cli.js"
@@ -20,8 +20,11 @@
   "directories": {
     "test": "test"
   },
+  "jest": {
+    "verbose": true
+  },
   "scripts": {
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "keywords": [
     "md-links"
@@ -32,6 +35,7 @@
   },
   "dependencies": {
     "commander": "^2.17.1",
+    "jest-report": "^0.1.11",
     "node-fetch": "^2.2.0",
     "patch": "0.0.1",
     "xmlhttprequest": "^1.8.0",

@@ -12,7 +12,7 @@ const exeMdLinks = (path, options) => {
 } 
 
 program
-  .version('1.0.51')
+  .version('1.0.53')
   .arguments('<path>')
   .option('-v, --validate', 'HTTP request to find out if the link works or not')
   .option('-s, --stats', 'basic statistics about links')
